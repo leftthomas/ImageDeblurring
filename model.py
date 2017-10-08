@@ -1,4 +1,4 @@
-from keras.layers import Input, Concatenate
+from keras.layers import Input, concatenate
 from keras.layers.advanced_activations import LeakyReLU, PReLU
 from keras.layers.convolutional import Convolution2D, ZeroPadding2D
 from keras.layers.core import Dropout
@@ -17,24 +17,24 @@ def generator_model():
 
     # The Dense Field
     d_1 = dense_block(inputs=h)
-    x = Concatenate([h, d_1])
+    x = concatenate([h, d_1])
     # the paper used dilated convolution at every even numbered layer within the dense field
     d_2 = dense_block(inputs=x, dilation_factor=(1, 1))
-    x = Concatenate([x, d_2])
+    x = concatenate([x, d_2])
     d_3 = dense_block(inputs=x)
-    x = Concatenate([x, d_3])
+    x = concatenate([x, d_3])
     d_4 = dense_block(inputs=x, dilation_factor=(2, 2))
-    x = Concatenate([x, d_4])
+    x = concatenate([x, d_4])
     d_5 = dense_block(inputs=x)
-    x = Concatenate([x, d_5])
+    x = concatenate([x, d_5])
     d_6 = dense_block(inputs=x, dilation_factor=(3, 3))
-    x = Concatenate([x, d_6])
+    x = concatenate([x, d_6])
     d_7 = dense_block(inputs=x)
-    x = Concatenate([x, d_7])
+    x = concatenate([x, d_7])
     d_8 = dense_block(inputs=x, dilation_factor=(2, 2))
-    x = Concatenate([x, d_8])
+    x = concatenate([x, d_8])
     d_9 = dense_block(inputs=x)
-    x = Concatenate([x, d_9])
+    x = concatenate([x, d_9])
     d_10 = dense_block(inputs=x, dilation_factor=(1, 1))
     # The Tail
     x = LeakyReLU(alpha=0.2)(d_10)
@@ -42,7 +42,7 @@ def generator_model():
     x = BatchNormalization()(x)
 
     # The Global Skip Connection
-    x = Concatenate([h, x])
+    x = concatenate([h, x])
     ############### Global Skip这里的输出维度作者设了多少不确定 ###############
     x = Convolution2D(filters=channel_rate, kernel_size=(3, 3), padding='same')(x)
     ############### Global Skip这里的输出维度作者设了多少不确定 ###############
@@ -74,8 +74,8 @@ def dense_block(inputs, dilation_factor=None):
     return x
 
 
-m = generator_model()
-print(m.summary())
+# m = generator_model()
+# print(m.summary())
 
 
 def discriminator_model():
