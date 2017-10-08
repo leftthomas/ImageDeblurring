@@ -1,8 +1,12 @@
 from keras.layers import Input, Dense
+from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.convolutional import Conv2D, MaxPooling2D
 from keras.layers.core import Activation, Flatten
+from keras.layers.noise import GaussianDropout
+from keras.layers.normalization import BatchNormalization
 from keras.models import Model, Sequential
 
+# the paper defined hyper-parameter:chr
 channel_rate = 64
 
 
@@ -15,6 +19,23 @@ def generator_model():
 
     model = Model(inputs=inputs, outputs=x)
     return model
+
+
+# Dense Block
+def dense_block(inputs, dilation_factor=None):
+    x = LeakyReLU()(inputs)
+    x = Conv2D(filters=4 * channel_rate, kernel_size=(1, 1), padding='same')(x)
+    x = BatchNormalization()(x)
+    x = LeakyReLU()(x)
+    # the paper used dilated convolution at every even numbered layer within the dense field
+    if dilation_factor is not None:
+        x = Conv2D(filters=channel_rate, kernel_size=(3, 3), padding='same', dilation_rate=dilation_factor)(x)
+    else:
+        x = Conv2D(filters=channel_rate, kernel_size=(3, 3), padding='same')(x)
+    x = BatchNormalization()(x)
+    # add Gaussian noise
+    x = GaussianDropout(rate=0.5)(x)
+    return x
 
 
 m = generator_model()
