@@ -96,15 +96,15 @@ def train(batch_size):
 
             # 每100次迭代保存一次生成器和判别器的权重
             if index % 100 == 9:
-                g.save_weights('generator.weights', True)
-                d.save_weights('discriminator.weights', True)
+                g.save_weights('generator_weights.h5', True)
+                d.save_weights('discriminator_weights.h5', True)
 
 
 def test(batch_size):
     # 训练完模型后，可以运行该函数生成图片
     g = generator_model()
     g.compile(loss='binary_crossentropy', optimizer="SGD")
-    g.load_weights('generator.weights')
+    g.load_weights('generator_weights.h5')
     noise = np.random.uniform(-1, 1, (batch_size, 100))
     generated_images = g.predict(noise, verbose=0)
     image = combine_images(generated_images)

@@ -1,37 +1,24 @@
-from keras.layers import Dense
-from keras.layers import Reshape
+from keras.layers import Input, Dense
 from keras.layers.convolutional import Conv2D, MaxPooling2D
-from keras.layers.convolutional import UpSampling2D
-from keras.layers.core import Activation
-from keras.layers.core import Flatten
-from keras.layers.normalization import BatchNormalization
-from keras.models import Sequential
+from keras.layers.core import Activation, Flatten
+from keras.models import Model, Sequential
+
+channel_rate = 64
 
 
 def generator_model():
-    # 下面搭建生成器的架构，首先导入序贯模型（sequential），即多个网络层的线性堆叠
-    model = Sequential()
-    # 添加一个全连接层，输入为100维向量，输出为1024维
-    model.add(Dense(input_dim=100, output_dim=1024))
-    # 添加一个激活函数tanh
-    model.add(Activation('tanh'))
-    # 添加一个全连接层，输出为128×7×7维度
-    model.add(Dense(128 * 7 * 7))
-    # 添加一个批量归一化层，该层在每个batch上将前一层的激活值重新规范化，即使得其输出数据的均值接近0，其标准差接近1
-    model.add(BatchNormalization())
-    model.add(Activation('tanh'))
-    # Reshape层用来将输入shape转换为特定的shape，将含有128*7*7个元素的向量转化为7×7×128张量
-    model.add(Reshape((7, 7, 128), input_shape=(128 * 7 * 7,)))
-    # 2维上采样层，即将数据的行和列分别重复2次
-    model.add(UpSampling2D(size=(2, 2)))
-    # 添加一个2维卷积层，卷积核大小为5×5，激活函数为tanh，共64个卷积核，并采用padding以保持图像尺寸不变
-    model.add(Conv2D(64, (5, 5), padding='same'))
-    model.add(Activation('tanh'))
-    model.add(UpSampling2D(size=(2, 2)))
-    # 卷积核设为1即输出图像的维度
-    model.add(Conv2D(1, (5, 5), padding='same'))
-    model.add(Activation('tanh'))
+    # Input Image
+    inputs = Input(shape=(256, 256, 3))
+    # The Head
+    x = Conv2D(filters=4 * channel_rate, kernel_size=(3, 3), padding='same')(inputs)
+    # The Dense Field
+
+    model = Model(inputs=inputs, outputs=x)
     return model
+
+
+m = generator_model()
+print(m.output)
 
 
 def discriminator_model():
