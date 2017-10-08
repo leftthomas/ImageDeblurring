@@ -1,4 +1,4 @@
-from keras.layers import Input, Dense
+from keras.layers import Input, Concatenate, Dense
 from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.convolutional import Conv2D, MaxPooling2D
 from keras.layers.core import Activation, Flatten
@@ -14,8 +14,33 @@ def generator_model():
     # Input Image
     inputs = Input(shape=(256, 256, 3))
     # The Head
-    x = Conv2D(filters=4 * channel_rate, kernel_size=(3, 3), padding='same')(inputs)
+    h = Conv2D(filters=4 * channel_rate, kernel_size=(3, 3), padding='same')(inputs)
+
     # The Dense Field
+    d_1 = dense_block(inputs=h)
+    x = Concatenate([h, d_1])
+    # the paper used dilated convolution at every even numbered layer within the dense field
+    d_2 = dense_block(inputs=x, dilation_factor=(1, 1))
+    x = Concatenate([x, d_2])
+    d_3 = dense_block(inputs=x)
+    x = Concatenate([x, d_3])
+    d_4 = dense_block(inputs=x, dilation_factor=(2, 2))
+    x = Concatenate([x, d_4])
+    d_5 = dense_block(inputs=x)
+    x = Concatenate([x, d_5])
+    d_6 = dense_block(inputs=x, dilation_factor=(3, 3))
+    x = Concatenate([x, d_6])
+    d_7 = dense_block(inputs=x)
+    x = Concatenate([x, d_7])
+    d_8 = dense_block(inputs=x, dilation_factor=(2, 2))
+    x = Concatenate([x, d_8])
+    d_9 = dense_block(inputs=x)
+    x = Concatenate([x, d_9])
+    d_10 = dense_block(inputs=x, dilation_factor=(1, 1))
+    # The Tail
+    x = LeakyReLU()(d_10)
+    x = Conv2D(filters=4 * channel_rate, kernel_size=(1, 1), padding='same')(x)
+    x = BatchNormalization()(x)
 
     model = Model(inputs=inputs, outputs=x)
     return model
@@ -27,7 +52,8 @@ def dense_block(inputs, dilation_factor=None):
     x = Conv2D(filters=4 * channel_rate, kernel_size=(1, 1), padding='same')(x)
     x = BatchNormalization()(x)
     x = LeakyReLU()(x)
-    # the paper used dilated convolution at every even numbered layer within the dense field
+    # the 3 × 3 convolutions along the dense field are alternated between ‘spatial’ convolution
+    # and ‘dilated’ convolution with linearly increasing dilation factor
     if dilation_factor is not None:
         x = Conv2D(filters=channel_rate, kernel_size=(3, 3), padding='same', dilation_rate=dilation_factor)(x)
     else:
