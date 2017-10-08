@@ -3,7 +3,7 @@ from keras.layers.advanced_activations import LeakyReLU, PReLU
 from keras.layers.convolutional import Convolution2D, ZeroPadding2D
 from keras.layers.core import Dropout
 from keras.layers.normalization import BatchNormalization
-from keras.models import Model, Sequential
+from keras.models import Model
 
 # the paper defined hyper-parameter:chr
 channel_rate = 64
@@ -74,44 +74,49 @@ def dense_block(inputs, dilation_factor=None):
     return x
 
 
-# m = generator_model()
-# print(m.summary())
+# g = generator_model()
+# print(g.summary())
 
 
 def discriminator_model():
     # Note the input channel is 6
     inputs = Input(shape=(256, 256, 3 * 2))
-    d = ZeroPadding2D(padding=(1, 1))(inputs)
-    d = Convolution2D(filters=48, kernel_size=(4, 4), strides=(2, 2))(d)
-    d = LeakyReLU(alpha=0.2)(d)
+    x = ZeroPadding2D(padding=(1, 1))(inputs)
+    x = Convolution2D(filters=48, kernel_size=(4, 4), strides=(2, 2))(x)
+    x = LeakyReLU(alpha=0.2)(x)
 
-    d = ZeroPadding2D(padding=(1, 1))(d)
-    d = Convolution2D(filters=48 * 2, kernel_size=(4, 4), strides=(2, 2))(d)
-    d = BatchNormalization()(d)
-    d = LeakyReLU(alpha=0.2)(d)
+    x = ZeroPadding2D(padding=(1, 1))(x)
+    x = Convolution2D(filters=48 * 2, kernel_size=(4, 4), strides=(2, 2))(x)
+    x = BatchNormalization()(x)
+    x = LeakyReLU(alpha=0.2)(x)
 
-    d = ZeroPadding2D(padding=(1, 1))(d)
-    d = Convolution2D(filters=48 * 4, kernel_size=(4, 4), strides=(2, 2))(d)
-    d = BatchNormalization()(d)
-    d = LeakyReLU(alpha=0.2)(d)
+    x = ZeroPadding2D(padding=(1, 1))(x)
+    x = Convolution2D(filters=48 * 4, kernel_size=(4, 4), strides=(2, 2))(x)
+    x = BatchNormalization()(x)
+    x = LeakyReLU(alpha=0.2)(x)
 
-    d = ZeroPadding2D(padding=(1, 1))(d)
-    d = Convolution2D(filters=48 * 8, kernel_size=(4, 4), strides=(2, 2))(d)
-    d = BatchNormalization()(d)
-    d = LeakyReLU(alpha=0.2)(d)
+    x = ZeroPadding2D(padding=(1, 1))(x)
+    x = Convolution2D(filters=48 * 8, kernel_size=(4, 4), strides=(2, 2))(x)
+    x = BatchNormalization()(x)
+    x = LeakyReLU(alpha=0.2)(x)
 
-    d = ZeroPadding2D(padding=(1, 1))(d)
-    outputs = Convolution2D(filters=1, kernel_size=(4, 4), strides=(1, 1), activation='sigmoid')(d)
+    x = ZeroPadding2D(padding=(1, 1))(x)
+    outputs = Convolution2D(filters=1, kernel_size=(4, 4), strides=(1, 1), activation='sigmoid')(x)
     model = Model(inputs, outputs)
     return model
 
 
-def generator_containing_discriminator(g, d):
-    # 将前面定义的生成器架构和判别器架构组拼接成一个大的神经网络，用于判别生成的图片
-    model = Sequential()
-    # 先添加生成器架构，再令d不可训练，即固定d
-    # 因此在给定d的情况下训练生成器，即通过将生成的结果投入到判别器进行辨别而优化生成器
-    model.add(g)
-    d.trainable = False
-    model.add(d)
+# d = discriminator_model()
+# print(d.summary())
+
+
+def generator_containing_discriminator(generator, discriminator):
+    inputs = Input((256, 256, 3))
+    x_generator = generator(inputs)
+    # Note the inputs first, then generated samples
+    merged = concatenate([inputs, x_generator])
+    # fixed d
+    discriminator.trainable = False
+    x_discriminator = discriminator(merged)
+    model = Model(inputs, [x_generator, x_discriminator])
     return model
