@@ -1,5 +1,5 @@
 from keras.layers import Input, Concatenate, Dense
-from keras.layers.advanced_activations import LeakyReLU
+from keras.layers.advanced_activations import LeakyReLU, PReLU
 from keras.layers.convolutional import Conv2D, MaxPooling2D
 from keras.layers.core import Activation, Flatten
 from keras.layers.noise import GaussianDropout
@@ -42,7 +42,16 @@ def generator_model():
     x = Conv2D(filters=4 * channel_rate, kernel_size=(1, 1), padding='same')(x)
     x = BatchNormalization()(x)
 
-    model = Model(inputs=inputs, outputs=x)
+    # The Global Skip Connection
+    x = Concatenate([h, x])
+    ############### Global Skip这里的输出维度作者设了多少不确定 ###############
+    x = Conv2D(filters=channel_rate, kernel_size=(3, 3), padding='same')(x)
+    ############### Global Skip这里的输出维度作者设了多少不确定 ###############
+    x = PReLU()(x)
+
+    # Output Image
+    outputs = Conv2D(filters=3, kernel_size=(3, 3), padding='same')(x)
+    model = Model(inputs=inputs, outputs=outputs)
     return model
 
 
@@ -60,7 +69,9 @@ def dense_block(inputs, dilation_factor=None):
         x = Conv2D(filters=channel_rate, kernel_size=(3, 3), padding='same')(x)
     x = BatchNormalization()(x)
     # add Gaussian noise
+    ############### 高斯Dropout这里不确定作者用的是不是这个 ###############
     x = GaussianDropout(rate=0.5)(x)
+    ############### 高斯Dropout这里不确定作者用的是不是这个 ###############
     return x
 
 
