@@ -1,8 +1,7 @@
-from keras.layers import Input, Concatenate, Dense
+from keras.layers import Input, Concatenate
 from keras.layers.advanced_activations import LeakyReLU, PReLU
-from keras.layers.convolutional import Conv2D, MaxPooling2D
-from keras.layers.core import Activation, Flatten
-from keras.layers.noise import GaussianDropout
+from keras.layers.convolutional import Convolution2D, ZeroPadding2D
+from keras.layers.core import Dropout
 from keras.layers.normalization import BatchNormalization
 from keras.models import Model, Sequential
 
@@ -14,7 +13,7 @@ def generator_model():
     # Input Image
     inputs = Input(shape=(256, 256, 3))
     # The Head
-    h = Conv2D(filters=4 * channel_rate, kernel_size=(3, 3), padding='same')(inputs)
+    h = Convolution2D(filters=4 * channel_rate, kernel_size=(3, 3), padding='same')(inputs)
 
     # The Dense Field
     d_1 = dense_block(inputs=h)
@@ -38,40 +37,40 @@ def generator_model():
     x = Concatenate([x, d_9])
     d_10 = dense_block(inputs=x, dilation_factor=(1, 1))
     # The Tail
-    x = LeakyReLU()(d_10)
-    x = Conv2D(filters=4 * channel_rate, kernel_size=(1, 1), padding='same')(x)
+    x = LeakyReLU(alpha=0.2)(d_10)
+    x = Convolution2D(filters=4 * channel_rate, kernel_size=(1, 1), padding='same')(x)
     x = BatchNormalization()(x)
 
     # The Global Skip Connection
     x = Concatenate([h, x])
     ############### Global Skip这里的输出维度作者设了多少不确定 ###############
-    x = Conv2D(filters=channel_rate, kernel_size=(3, 3), padding='same')(x)
+    x = Convolution2D(filters=channel_rate, kernel_size=(3, 3), padding='same')(x)
     ############### Global Skip这里的输出维度作者设了多少不确定 ###############
     x = PReLU()(x)
 
     # Output Image
-    outputs = Conv2D(filters=3, kernel_size=(3, 3), padding='same')(x)
+    outputs = Convolution2D(filters=3, kernel_size=(3, 3), padding='same')(x)
     model = Model(inputs=inputs, outputs=outputs)
     return model
 
 
 # Dense Block
 def dense_block(inputs, dilation_factor=None):
-    x = LeakyReLU()(inputs)
-    x = Conv2D(filters=4 * channel_rate, kernel_size=(1, 1), padding='same')(x)
+    x = LeakyReLU(alpha=0.2)(inputs)
+    x = Convolution2D(filters=4 * channel_rate, kernel_size=(1, 1), padding='same')(x)
     x = BatchNormalization()(x)
-    x = LeakyReLU()(x)
+    x = LeakyReLU(alpha=0.2)(x)
     # the 3 × 3 convolutions along the dense field are alternated between ‘spatial’ convolution
     # and ‘dilated’ convolution with linearly increasing dilation factor
     if dilation_factor is not None:
-        x = Conv2D(filters=channel_rate, kernel_size=(3, 3), padding='same', dilation_rate=dilation_factor)(x)
+        x = Convolution2D(filters=channel_rate, kernel_size=(3, 3), padding='same', dilation_rate=dilation_factor)(x)
     else:
-        x = Conv2D(filters=channel_rate, kernel_size=(3, 3), padding='same')(x)
+        x = Convolution2D(filters=channel_rate, kernel_size=(3, 3), padding='same')(x)
     x = BatchNormalization()(x)
     # add Gaussian noise
-    ############### 高斯Dropout这里不确定作者用的是不是这个 ###############
-    x = GaussianDropout(rate=0.5)(x)
-    ############### 高斯Dropout这里不确定作者用的是不是这个 ###############
+    ############### Dropout这里不确定作者用的是不是这个 ###############
+    x = Dropout(rate=0.5)(x)
+    ############### Dropout这里不确定作者用的是不是这个 ###############
     return x
 
 
@@ -80,23 +79,30 @@ print(m.output)
 
 
 def discriminator_model():
-    # 下面搭建判别器架构，同样采用序贯模型
-    model = Sequential()
-    # 添加2维卷积层，卷积核大小为5×5，激活函数为tanh，输出为64维
-    model.add(Conv2D(64, (5, 5), padding='same', input_shape=(28, 28, 1)))
-    model.add(Activation('tanh'))
-    # 为空域信号施加最大值池化，pool_size取（2，2）代表使图片在两个维度上均变为原长的一半
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Conv2D(128, (5, 5)))
-    model.add(Activation('tanh'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    # Flatten层把多维输入一维化，常用在从卷积层到全连接层的过渡
-    model.add(Flatten())
-    model.add(Dense(1024))
-    model.add(Activation('tanh'))
-    # 一个结点进行二值分类，并采用sigmoid函数的输出作为概念
-    model.add(Dense(1))
-    model.add(Activation('sigmoid'))
+    # Note the input channel is 6
+    inputs = Input(shape=(256, 256, 3 * 2))
+    d = ZeroPadding2D(padding=(1, 1))(inputs)
+    d = Convolution2D(filters=48, kernel_size=(4, 4), strides=(2, 2))(d)
+    d = LeakyReLU(alpha=0.2)(d)
+
+    d = ZeroPadding2D(padding=(1, 1))(d)
+    d = Convolution2D(filters=48 * 2, kernel_size=(4, 4), strides=(2, 2))(d)
+    d = BatchNormalization()(d)
+    d = LeakyReLU(alpha=0.2)(d)
+
+    d = ZeroPadding2D(padding=(1, 1))(d)
+    d = Convolution2D(filters=48 * 4, kernel_size=(4, 4), strides=(2, 2))(d)
+    d = BatchNormalization()(d)
+    d = LeakyReLU(alpha=0.2)(d)
+
+    d = ZeroPadding2D(padding=(1, 1))(d)
+    d = Convolution2D(filters=48 * 8, kernel_size=(4, 4), strides=(2, 2))(d)
+    d = BatchNormalization()(d)
+    d = LeakyReLU(alpha=0.2)(d)
+
+    d = ZeroPadding2D(padding=(1, 1))(d)
+    outputs = Convolution2D(filters=1, kernel_size=(4, 4), strides=(1, 1), activation='sigmoid')(d)
+    model = Model(inputs, outputs)
     return model
 
 
