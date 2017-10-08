@@ -75,7 +75,7 @@ def dense_block(inputs, dilation_factor=None):
 
 
 m = generator_model()
-print(m.output)
+print(m.summary())
 
 
 def discriminator_model():
