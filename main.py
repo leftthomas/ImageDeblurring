@@ -9,7 +9,7 @@ from model import generator_model, discriminator_model, generator_containing_dis
 
 
 def combine_images(generated_images):
-    #生成图片拼接
+    # 生成图片拼接
     num = generated_images.shape[0]
     width = int(math.sqrt(num))
     height = int(math.ceil(float(num)/width))
@@ -24,16 +24,16 @@ def combine_images(generated_images):
     return image
 
 
-def train(BATCH_SIZE):
-    (X_train, y_train), (X_test, y_test) = mnist.load_data()
-    # iamge_data_format选择"channels_last"或"channels_first"，该选项指定了Keras将要使用的维度顺序。
+def train(batch_size):
+    (x_train, y_train), (x_test, y_test) = mnist.load_data()
+    # image_data_format选择"channels_last"或"channels_first"，该选项指定了Keras将要使用的维度顺序。
     # "channels_first"假定2D数据的维度顺序为(channels, rows, cols)，3D数据的维度顺序为(channels, conv_dim1, conv_dim2, conv_dim3)
 
     # 转换字段类型，并将数据导入变量中
-    X_train = (X_train.astype(np.float32) - 127.5) / 127.5
-    X_train = X_train[:, :, :, None]
-    X_test = X_test[:, :, :, None]
-    # X_train = X_train.reshape((X_train.shape, 1) + X_train.shape[1:])
+    x_train = (x_train.astype(np.float32) - 127.5) / 127.5
+    x_train = x_train[:, :, :, None]
+    x_test = x_test[:, :, :, None]
+    # x_train = x_train.reshape((x_train.shape, 1) + x_train.shape[1:])
 
     # 将定义好的模型架构赋值给特定的变量
     d = discriminator_model()
@@ -57,16 +57,16 @@ def train(BATCH_SIZE):
         print("Epoch is", epoch)
 
         # 计算一个epoch所需要的迭代数量，即训练样本数除批量大小数的值取整；其中shape[0]就是读取矩阵第一维度的长度
-        print("Number of batches", int(X_train.shape[0] / BATCH_SIZE))
+        print("Number of batches", int(x_train.shape[0] / batch_size))
 
         # 在一个epoch内进行迭代训练
-        for index in range(int(X_train.shape[0] / BATCH_SIZE)):
+        for index in range(int(x_train.shape[0] / batch_size)):
 
             # 随机生成的噪声服从均匀分布，且采样下界为-1、采样上界为1，输出BATCH_SIZE×100个样本；即抽取一个批量的随机样本
-            noise = np.random.uniform(-1, 1, size=(BATCH_SIZE, 100))
+            noise = np.random.uniform(-1, 1, size=(batch_size, 100))
 
             # 抽取一个批量的真实图片
-            image_batch = X_train[index * BATCH_SIZE:(index + 1) * BATCH_SIZE]
+            image_batch = x_train[index * batch_size:(index + 1) * batch_size]
 
             # 生成的图片使用生成器对随机噪声进行推断；verbose为日志显示，0为不在标准输出流输出日志信息，1为输出进度条记录
             generated_images = g.predict(noise, verbose=0)
@@ -79,23 +79,23 @@ def train(BATCH_SIZE):
                     "GAN/" + str(epoch) + "_" + str(index) + ".png")
 
             # 将真实的图片和生成的图片以多维数组的形式拼接在一起，真实图片在上，生成图片在下
-            X = np.concatenate((image_batch, generated_images))
+            x = np.concatenate((image_batch, generated_images))
 
             # 生成图片真假标签，即一个包含两倍批量大小的列表；前一个批量大小都是1，代表真实图片，后一个批量大小都是0，代表伪造图片
-            y = [1] * BATCH_SIZE + [0] * BATCH_SIZE
+            y = [1] * batch_size + [0] * batch_size
 
             # 判别器的损失；在一个batch的数据上进行一次参数更新
-            d_loss = d.train_on_batch(X, y)
+            d_loss = d.train_on_batch(x, y)
             print("batch %d d_loss : %f" % (index, d_loss))
 
             # 随机生成的噪声服从均匀分布
-            noise = np.random.uniform(-1, 1, (BATCH_SIZE, 100))
+            noise = np.random.uniform(-1, 1, (batch_size, 100))
 
             # 固定判别器
             d.trainable = False
 
             # 计算生成器损失；在一个batch的数据上进行一次参数更新
-            g_loss = d_on_g.train_on_batch(noise, [1] * BATCH_SIZE)
+            g_loss = d_on_g.train_on_batch(noise, [1] * batch_size)
 
             # 令判别器可训练
             d.trainable = True
@@ -107,8 +107,8 @@ def train(BATCH_SIZE):
                 d.save_weights('discriminator.weights', True)
 
 
-def test(BATCH_SIZE, nice=False):
-    #训练完模型后，可以运行该函数生成图片
+def test(batch_size, nice=False):
+    # 训练完模型后，可以运行该函数生成图片
     g = generator_model()
     g.compile(loss='binary_crossentropy', optimizer="SGD")
     g.load_weights('generator.weights')
@@ -116,21 +116,21 @@ def test(BATCH_SIZE, nice=False):
         d = discriminator_model()
         d.compile(loss='binary_crossentropy', optimizer="SGD")
         d.load_weights('discriminator.weights')
-        noise = np.random.uniform(-1, 1, (BATCH_SIZE*20, 100))
+        noise = np.random.uniform(-1, 1, (batch_size * 20, 100))
         generated_images = g.predict(noise, verbose=1)
         d_pret = d.predict(generated_images, verbose=1)
-        index = np.arange(0, BATCH_SIZE*20)
-        index.resize((BATCH_SIZE*20, 1))
+        index = np.arange(0, batch_size * 20)
+        index.resize(batch_size * 20, 1)
         pre_with_index = list(np.append(d_pret, index, axis=1))
         pre_with_index.sort(key=lambda x: x[0], reverse=True)
-        nice_images = np.zeros((BATCH_SIZE,) + generated_images.shape[1:3], dtype=np.float32)
+        nice_images = np.zeros((batch_size,) + generated_images.shape[1:3], dtype=np.float32)
         nice_images = nice_images[:, :, :, None]
-        for i in range(BATCH_SIZE):
+        for i in range(batch_size):
             idx = int(pre_with_index[i][1])
             nice_images[i, :, :, 0] = generated_images[idx, :, :, 0]
         image = combine_images(nice_images)
     else:
-        noise = np.random.uniform(-1, 1, (BATCH_SIZE, 100))
+        noise = np.random.uniform(-1, 1, (batch_size, 100))
         generated_images = g.predict(noise, verbose=0)
         image = combine_images(generated_images)
     image = image*127.5+127.5
