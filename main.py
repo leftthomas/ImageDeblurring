@@ -14,26 +14,20 @@ def combine_images(generated_images):
     width = int(math.sqrt(num))
     height = int(math.ceil(float(num)/width))
     shape = generated_images.shape[1:3]
-    image = np.zeros((height*shape[0], width*shape[1]),
-                     dtype=generated_images.dtype)
+    image = np.zeros((height * shape[0], width * shape[1]), dtype=generated_images.dtype)
     for index, img in enumerate(generated_images):
         i = int(index/width)
         j = index % width
-        image[i*shape[0]:(i+1)*shape[0], j*shape[1]:(j+1)*shape[1]] = \
-            img[:, :, 0]
+        image[i * shape[0]:(i + 1) * shape[0], j * shape[1]:(j + 1) * shape[1]] = img[:, :, 0]
     return image
 
 
 def train(batch_size):
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
-    # image_data_format选择"channels_last"或"channels_first"，该选项指定了Keras将要使用的维度顺序。
-    # "channels_first"假定2D数据的维度顺序为(channels, rows, cols)，3D数据的维度顺序为(channels, conv_dim1, conv_dim2, conv_dim3)
-
     # 转换字段类型，并将数据导入变量中
     x_train = (x_train.astype(np.float32) - 127.5) / 127.5
     x_train = x_train[:, :, :, None]
     x_test = x_test[:, :, :, None]
-    # x_train = x_train.reshape((x_train.shape, 1) + x_train.shape[1:])
 
     # 将定义好的模型架构赋值给特定的变量
     d = discriminator_model()
@@ -75,8 +69,7 @@ def train(batch_size):
             if index % 100 == 0:
                 image = combine_images(generated_images)
                 image = image * 127.5 + 127.5
-                Image.fromarray(image.astype(np.uint8)).save(
-                    "GAN/" + str(epoch) + "_" + str(index) + ".png")
+                Image.fromarray(image.astype(np.uint8)).save("GAN/" + str(epoch) + "_" + str(index) + ".png")
 
             # 将真实的图片和生成的图片以多维数组的形式拼接在一起，真实图片在上，生成图片在下
             x = np.concatenate((image_batch, generated_images))
@@ -107,35 +100,16 @@ def train(batch_size):
                 d.save_weights('discriminator.weights', True)
 
 
-def test(batch_size, nice=False):
+def test(batch_size):
     # 训练完模型后，可以运行该函数生成图片
     g = generator_model()
     g.compile(loss='binary_crossentropy', optimizer="SGD")
     g.load_weights('generator.weights')
-    if nice:
-        d = discriminator_model()
-        d.compile(loss='binary_crossentropy', optimizer="SGD")
-        d.load_weights('discriminator.weights')
-        noise = np.random.uniform(-1, 1, (batch_size * 20, 100))
-        generated_images = g.predict(noise, verbose=1)
-        d_pret = d.predict(generated_images, verbose=1)
-        index = np.arange(0, batch_size * 20)
-        index.resize(batch_size * 20, 1)
-        pre_with_index = list(np.append(d_pret, index, axis=1))
-        pre_with_index.sort(key=lambda x: x[0], reverse=True)
-        nice_images = np.zeros((batch_size,) + generated_images.shape[1:3], dtype=np.float32)
-        nice_images = nice_images[:, :, :, None]
-        for i in range(batch_size):
-            idx = int(pre_with_index[i][1])
-            nice_images[i, :, :, 0] = generated_images[idx, :, :, 0]
-        image = combine_images(nice_images)
-    else:
-        noise = np.random.uniform(-1, 1, (batch_size, 100))
-        generated_images = g.predict(noise, verbose=0)
-        image = combine_images(generated_images)
+    noise = np.random.uniform(-1, 1, (batch_size, 100))
+    generated_images = g.predict(noise, verbose=0)
+    image = combine_images(generated_images)
     image = image*127.5+127.5
-    Image.fromarray(image.astype(np.uint8)).save(
-        "GAN/generated_image.png")
+    Image.fromarray(image.astype(np.uint8)).save("GAN/generated_image.png")
 
 
 # train(132)

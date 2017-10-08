@@ -37,14 +37,8 @@ def generator_model():
 def discriminator_model():
     # 下面搭建判别器架构，同样采用序贯模型
     model = Sequential()
-
-    # 添加2维卷积层，卷积核大小为5×5，激活函数为tanh，输入shape在‘channels_first’模式下为（samples,channels，rows，cols）
-    # 在‘channels_last’模式下为（samples,rows,cols,channels），输出为64维
-    model.add(
-        Conv2D(64, (5, 5),
-               padding='same',
-               input_shape=(28, 28, 1))
-    )
+    # 添加2维卷积层，卷积核大小为5×5，激活函数为tanh，输出为64维
+    model.add(Conv2D(64, (5, 5), padding='same', input_shape=(28, 28, 1)))
     model.add(Activation('tanh'))
     # 为空域信号施加最大值池化，pool_size取（2，2）代表使图片在两个维度上均变为原长的一半
     model.add(MaxPooling2D(pool_size=(2, 2)))
