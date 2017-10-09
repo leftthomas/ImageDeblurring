@@ -7,6 +7,9 @@ from keras.models import Model
 
 # the paper defined hyper-parameter:chr
 channel_rate = 64
+# Note the image_shape must be multiple of patch_shape
+image_shape = (256, 256, 3)
+patch_shape = (channel_rate, channel_rate, 3)
 
 
 # Dense Block
@@ -18,7 +21,8 @@ def dense_block(inputs, dilation_factor=None):
     # the 3 × 3 convolutions along the dense field are alternated between ‘spatial’ convolution
     # and ‘dilated’ convolution with linearly increasing dilation factor
     if dilation_factor is not None:
-        x = Convolution2D(filters=channel_rate, kernel_size=(3, 3), padding='same', dilation_rate=dilation_factor)(x)
+        x = Convolution2D(filters=channel_rate, kernel_size=(3, 3), padding='same',
+                          dilation_rate=dilation_factor)(x)
     else:
         x = Convolution2D(filters=channel_rate, kernel_size=(3, 3), padding='same')(x)
     x = BatchNormalization()(x)
@@ -29,7 +33,7 @@ def dense_block(inputs, dilation_factor=None):
 
 def generator_model():
     # Input Image
-    inputs = Input(shape=(256, 256, 3))
+    inputs = Input(shape=image_shape)
     # The Head
     h = Convolution2D(filters=4 * channel_rate, kernel_size=(3, 3), padding='same')(inputs)
 
@@ -76,7 +80,7 @@ def generator_model():
 
 def discriminator_model():
     # PatchGAN
-    inputs = Input(shape=(channel_rate, channel_rate, 3))
+    inputs = Input(shape=patch_shape)
     x = Convolution2D(filters=channel_rate, kernel_size=(3, 3), strides=(2, 2), padding="same")(inputs)
     x = BatchNormalization()(x)
     x = LeakyReLU(alpha=0.2)(x)
@@ -96,9 +100,11 @@ def discriminator_model():
     x = Flatten()(x)
     outputs = Dense(units=1, activation='sigmoid')(x)
     model = Model(inputs=inputs, outputs=outputs)
+    # print(model.summary())
 
     # discriminator
-    inputs = [Input(shape=(channel_rate, channel_rate, 3)) for _ in range(16)]
+    inputs = [Input(shape=patch_shape) for _ in range(int(image_shape[0] / patch_shape[0])
+                                                      * int(image_shape[1] / patch_shape[1]))]
     x = [model(patch) for patch in inputs]
     outputs = concatenate(x)
     model = Model(inputs=inputs, outputs=outputs)
@@ -110,11 +116,13 @@ def discriminator_model():
 
 
 def generator_containing_discriminator(generator, discriminator):
-    inputs = Input(shape=(256, 256, 3))
+    inputs = Input(shape=image_shape)
     generated_image = generator(inputs)
 
-    list_row_idx = [(i * channel_rate, (i + 1) * channel_rate) for i in range(4)]
-    list_col_idx = [(i * channel_rate, (i + 1) * channel_rate) for i in range(4)]
+    list_row_idx = [(i * channel_rate, (i + 1) * channel_rate) for i in
+                    range(int(image_shape[0] / patch_shape[0]))]
+    list_col_idx = [(i * channel_rate, (i + 1) * channel_rate) for i in
+                    range(int(image_shape[1] / patch_shape[1]))]
 
     list_gen_patch = []
     for row_idx in list_row_idx:
