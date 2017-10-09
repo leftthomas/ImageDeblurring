@@ -1,7 +1,7 @@
 from keras.layers import Input, concatenate
 from keras.layers.advanced_activations import LeakyReLU, PReLU
 from keras.layers.convolutional import Convolution2D
-from keras.layers.core import Dropout, Dense, Flatten
+from keras.layers.core import Dropout, Dense, Flatten, Lambda
 from keras.layers.normalization import BatchNormalization
 from keras.models import Model
 
@@ -109,13 +109,22 @@ def discriminator_model():
 # print(d.summary())
 
 
-def generator_containing_discriminator(image_shape, generator, discriminator):
-    inputs = Input(image_shape)
-    x_generator = generator(inputs)
-    # Note the inputs first, then generated samples
-    merged = concatenate([inputs, x_generator])
-    # fixed d to train generator
-    discriminator.trainable = False
-    x_discriminator = discriminator(merged)
-    model = Model(inputs, [x_generator, x_discriminator])
+def generator_containing_discriminator(generator, discriminator):
+    inputs = Input(shape=(256, 256, 3))
+    generated_image = generator(inputs)
+
+    list_row_idx = [(i * channel_rate, (i + 1) * channel_rate) for i in range(4)]
+    list_col_idx = [(i * channel_rate, (i + 1) * channel_rate) for i in range(4)]
+
+    list_gen_patch = []
+    for row_idx in list_row_idx:
+        for col_idx in list_col_idx:
+            x_patch = Lambda(lambda z: z[:, row_idx[0]:row_idx[1], col_idx[0]:col_idx[1], :])(generated_image)
+            list_gen_patch.append(x_patch)
+
+    outputs = discriminator(list_gen_patch)
+    model = Model(inputs=inputs, outputs=outputs)
     return model
+
+# m = generator_containing_discriminator(generator=generator_model(),discriminator=discriminator_model())
+# print(m.summary())
