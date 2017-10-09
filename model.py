@@ -43,13 +43,11 @@ def generator_model():
 
     # The Global Skip Connection
     x = concatenate([h, x])
-    ############### Global Skip这里的输出维度作者设了多少不确定 ###############
     x = Convolution2D(filters=channel_rate, kernel_size=(3, 3), padding='same')(x)
-    ############### Global Skip这里的输出维度作者设了多少不确定 ###############
     x = PReLU()(x)
 
     # Output Image
-    outputs = Convolution2D(filters=3, kernel_size=(3, 3), padding='same')(x)
+    outputs = Convolution2D(filters=3, kernel_size=(3, 3), padding='same', activation='tanh')(x)
     model = Model(inputs=inputs, outputs=outputs)
     return model
 
@@ -68,9 +66,7 @@ def dense_block(inputs, dilation_factor=None):
         x = Convolution2D(filters=channel_rate, kernel_size=(3, 3), padding='same')(x)
     x = BatchNormalization()(x)
     # add Gaussian noise
-    ############### Dropout这里不确定作者用的是不是这个 ###############
     x = Dropout(rate=0.5)(x)
-    ############### Dropout这里不确定作者用的是不是这个 ###############
     return x
 
 
@@ -115,7 +111,7 @@ def generator_containing_discriminator(generator, discriminator):
     x_generator = generator(inputs)
     # Note the inputs first, then generated samples
     merged = concatenate([inputs, x_generator])
-    # fixed d
+    # fixed d to train generator
     discriminator.trainable = False
     x_discriminator = discriminator(merged)
     model = Model(inputs, [x_generator, x_discriminator])
