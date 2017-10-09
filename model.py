@@ -75,7 +75,7 @@ def generator_model():
 
 
 # g = generator_model()
-# print(g.summary())
+# g.summary()
 
 
 def discriminator_model():
@@ -100,7 +100,7 @@ def discriminator_model():
     x = Flatten()(x)
     outputs = Dense(units=1, activation='sigmoid')(x)
     model = Model(inputs=inputs, outputs=outputs)
-    # print(model.summary())
+    # model.summary()
 
     # discriminator
     inputs = [Input(shape=patch_shape) for _ in range(int(image_shape[0] / patch_shape[0])
@@ -112,7 +112,7 @@ def discriminator_model():
 
 
 # d = discriminator_model()
-# print(d.summary())
+# d.summary()
 
 
 def generator_containing_discriminator(generator, discriminator):
@@ -134,5 +134,6 @@ def generator_containing_discriminator(generator, discriminator):
     model = Model(inputs=inputs, outputs=outputs)
     return model
 
+
 # m = generator_containing_discriminator(generator=generator_model(),discriminator=discriminator_model())
-# print(m.summary())
+# m.summary()
