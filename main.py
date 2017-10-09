@@ -7,6 +7,8 @@ from keras.optimizers import SGD
 
 from model import generator_model, discriminator_model, generator_containing_discriminator
 
+image_shape = (256, 256, 3)
+
 
 def combine_images(generated_images):
     # 生成图片拼接
