@@ -35,13 +35,13 @@ def format_image(image_path, size):
 # format_image('data/small/test/301.jpg',size=256)
 
 
-# convert images to hdf5 dataset
+# convert images to hdf5 data
 def build_hdf5(jpeg_dir, size=256):
     # put data in HDF5
-    hdf5_file = os.path.join('data', "data.h5")
-    with h5py.File(hdf5_file, "w") as f:
+    hdf5_file = os.path.join('data', 'data.h5')
+    with h5py.File(hdf5_file, 'w') as f:
 
-        for data_type in tqdm(["train", "test", "val"], desc='create HDF5 dataset from images'):
+        for data_type in tqdm(['train', 'test', 'val'], desc='create HDF5 dataset from images'):
             data_path = jpeg_dir + '/%s/*.jpg' % data_type
             images_path = gb.glob(data_path)
             # print(images_path)
@@ -54,20 +54,36 @@ def build_hdf5(jpeg_dir, size=256):
 
             # print(len(data_full))
             # print(len(data_blur))
-            f.create_dataset("%s_data_full" % data_type, data=data_full)
-            f.create_dataset("%s_data_blur" % data_type, data=data_blur)
+            f.create_dataset('%s_data_full' % data_type, data=data_full)
+            f.create_dataset('%s_data_blur' % data_type, data=data_blur)
+
+
+# build_hdf5('data/small')
+
+
+# load data by data type
+def load_data(data_type):
+    with h5py.File('data/data.h5', 'r') as f:
+        data_full = f['%s_data_full' % data_type][:]
+        data_full = normalization(data_full)
+
+        data_blur = f['%s_data_blur' % data_type][:]
+        data_blur = normalization(data_blur)
+
+        return data_full, data_blur
+
+
+# image_full, image_blur=load_data('train')
+# print(image_full,'\n',len(image_blur))
 
 
 def check_hdf5():
-    """
-    Plot images with landmarks to check the processing
-    """
     # Get hdf5 file
-    hdf5_file = os.path.join('data', "data.h5")
+    hdf5_file = os.path.join('data', 'data.h5')
 
-    with h5py.File(hdf5_file, "r") as f:
-        data_full = f["train_data_full"]
-        data_blur = f["train_data_blur"]
+    with h5py.File(hdf5_file, 'r') as f:
+        data_full = f['train_data_full']
+        data_blur = f['train_data_blur']
         for i in range(data_full.shape[0]):
             plt.figure()
             image_full = data_full[i, :, :, :]
@@ -79,31 +95,4 @@ def check_hdf5():
             plt.close()
 
 
-# build_hdf5('data/small')
 # check_hdf5()
-
-
-def load_data():
-    with h5py.File("data/data.h5", "r") as f:
-        image_full_train = f["train_data_full"][:]
-        image_full_train = normalization(image_full_train)
-
-        image_blur_train = f["train_data_blur"][:]
-        image_blur_train = normalization(image_blur_train)
-
-        image_full_val = f["val_data_full"][:]
-        image_full_val = normalization(image_full_val)
-
-        image_blur_val = f["val_data_blur"][:]
-        image_blur_val = normalization(image_blur_val)
-
-        image_full_test = f["test_data_full"][:]
-        image_full_test = normalization(image_full_test)
-
-        image_blur_test = f["test_data_blur"][:]
-        image_blur_test = normalization(image_blur_test)
-
-        return image_full_train, image_blur_train, image_full_val, image_blur_val, image_full_test, image_blur_test
-
-# image_full_train, image_blur_train, image_full_val, image_blur_val,image_full_test, image_blur_test=load_data()
-# print(image_full_train,'\n',len(image_full_train))
