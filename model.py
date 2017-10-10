@@ -113,6 +113,7 @@ def discriminator_model():
 
 # d = discriminator_model()
 # d.summary()
+# plot_model(d)
 
 
 def generator_containing_discriminator(generator, discriminator):
