@@ -1,4 +1,5 @@
 import numpy as np
+from PIL import Image
 
 import data_utils
 from model import generator_model, discriminator_model, generator_containing_discriminator
@@ -15,62 +16,48 @@ def train(batch_size, epoch_num):
 
     # compile the generator model, use default optimizer parameters
     g.compile(optimizer='adam', loss='binary_crossentropy')
-
-    d.trainable = True
     d.compile(optimizer='adam', loss='binary_crossentropy')
+    d_on_g.compile(optimizer='adam', loss='binary_crossentropy')
 
-    # # 下面在满足epoch条件下进行训练
-    # for epoch in range(epoch_num):
-    #     print("Epoch is", epoch)
-    #
-    #     # 计算一个epoch所需要的迭代数量，即训练样本数除批量大小数的值取整；其中shape[0]就是读取矩阵第一维度的长度
-    #     print("Number of batches", int(x_train.shape[0] / batch_size))
-    #
-    #     # 在一个epoch内进行迭代训练
-    #     for index in range(int(x_train.shape[0] / batch_size)):
-    #
-    #         # 随机生成的噪声服从均匀分布，且采样下界为-1、采样上界为1，输出BATCH_SIZE×100个样本；即抽取一个批量的随机样本
-    #         noise = np.random.uniform(-1, 1, size=(batch_size, 100))
-    #
-    #         # 抽取一个批量的真实图片
-    #         image_batch = x_train[index * batch_size:(index + 1) * batch_size]
-    #
-    #         # 生成的图片使用生成器对随机噪声进行推断；verbose为日志显示，0为不在标准输出流输出日志信息，1为输出进度条记录
-    #         generated_images = g.predict(noise, verbose=0)
-    #
-    #         # 每经过100次迭代输出一张生成的图片
-    #         if index % 100 == 0:
-    #             image = combine_images(generated_images)
-    #             image = image * 127.5 + 127.5
-    #             Image.fromarray(image.astype(np.uint8)).save("GAN/" + str(epoch) + "_" + str(index) + ".png")
-    #
-    #         # 将真实的图片和生成的图片以多维数组的形式拼接在一起，真实图片在上，生成图片在下
-    #         x = np.concatenate((image_batch, generated_images))
-    #
-    #         # 生成图片真假标签，即一个包含两倍批量大小的列表；前一个批量大小都是1，代表真实图片，后一个批量大小都是0，代表伪造图片
-    #         y = [1] * batch_size + [0] * batch_size
-    #
-    #         # 判别器的损失；在一个batch的数据上进行一次参数更新
-    #         d_loss = d.train_on_batch(x, y)
-    #         print("batch %d d_loss : %f" % (index, d_loss))
-    #
-    #         # 随机生成的噪声服从均匀分布
-    #         noise = np.random.uniform(-1, 1, (batch_size, 100))
-    #
-    #         # 固定判别器
-    #         d.trainable = False
-    #
-    #         # 计算生成器损失；在一个batch的数据上进行一次参数更新
-    #         g_loss = d_on_g.train_on_batch(noise, [1] * batch_size)
-    #
-    #         # 令判别器可训练
-    #         d.trainable = True
-    #         print("batch %d g_loss : %f" % (index, g_loss))
-    #
-    #         # 每100次迭代保存一次生成器和判别器的权重
-    #         if index % 100 == 9:
-    #             g.save_weights('generator_weights.h5', True)
-    #             d.save_weights('discriminator_weights.h5', True)
+    for epoch in range(epoch_num):
+        print("Epoch is", epoch + 1)
+        print("Number of batches", int(x_train.shape[0] / batch_size))
+
+        for index in range(int(x_train.shape[0] / batch_size)):
+            # 抽取一个批量的数据
+            image_blur_batch = x_train[index * batch_size:(index + 1) * batch_size]
+            image_full_batch = y_train[index * batch_size:(index + 1) * batch_size]
+            generated_images = g.predict(x=image_blur_batch, batch_size=batch_size)
+
+            # 每经过100次迭代输出一张生成的图片
+            if index % 100 == 0:
+                image = generated_images * 127.5 + 127.5
+                Image.fromarray(image.astype(np.uint8)).save("result/" + str(epoch + 1) + "_" + str(index + 1) + ".png")
+
+            # 将真实的图片和生成的图片以多维数组的形式拼接在一起，真实图片在上，生成图片在下
+            x = np.concatenate((image_full_batch, generated_images))
+
+            # 生成图片真假标签，即一个包含两倍批量大小的列表；前一个批量标签都是1，代表真实图片，后一个批量标签都是0，代表伪造图片
+            y = [1] * batch_size + [0] * batch_size
+
+            # 判别器的损失；在一个batch的数据上进行一次参数更新
+            d_loss = d.train_on_batch(x, y)
+            print("batch %d d_loss : %f" % (index + 1, d_loss))
+
+            # 固定判别器
+            d.trainable = False
+
+            # 计算生成器损失；在一个batch的数据上进行一次参数更新
+            g_loss = d_on_g.train_on_batch(image_blur_batch, [1] * batch_size)
+
+            # 令判别器可训练
+            d.trainable = True
+            print("batch %d g_loss : %f" % (index + 1, g_loss))
+
+            # 每100次迭代保存一次生成器和判别器的权重
+            if index % 100 == 9:
+                g.save_weights('weight/generator_weights.h5', True)
+                d.save_weights('weight/discriminator_weights.h5', True)
 
 
 def test(batch_size):
