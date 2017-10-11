@@ -19,7 +19,7 @@ def format_image(image_path, size):
     image = Image.open(image_path)
     # slice image into full and blur images
     image_full = image.crop((0, 0, image.size[0] / 2, image.size[1]))
-    # Note the
+    # Note the full image in left, the blur image in right
     image_blur = image.crop((image.size[0] / 2, 0, image.size[0], image.size[1]))
 
     # image_full.show()
@@ -64,10 +64,10 @@ def build_hdf5(jpeg_dir, size=256):
 # load data by data type
 def load_data(data_type):
     with h5py.File('data/data.h5', 'r') as f:
-        data_full = f['%s_data_full' % data_type][:]
+        data_full = f['%s_data_full' % data_type][:].astype(np.float32)
         data_full = normalization(data_full)
 
-        data_blur = f['%s_data_blur' % data_type][:]
+        data_blur = f['%s_data_blur' % data_type][:].astype(np.float32)
         data_blur = normalization(data_blur)
 
         return data_full, data_blur
