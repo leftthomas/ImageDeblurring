@@ -2,7 +2,6 @@ import glob as gb
 import os
 
 import h5py
-import matplotlib.pylab as plt
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
@@ -38,7 +37,7 @@ def build_hdf5(jpeg_dir, size=256):
     hdf5_file = os.path.join('data', 'data.h5')
     with h5py.File(hdf5_file, 'w') as f:
 
-        for data_type in tqdm(['train', 'test', 'val'], desc='create HDF5 dataset from images'):
+        for data_type in tqdm(['train', 'test'], desc='create HDF5 dataset from images'):
             data_path = jpeg_dir + '/%s/*.jpg' % data_type
             images_path = gb.glob(data_path)
             # print(images_path)
@@ -67,22 +66,19 @@ def load_data(data_type):
         return data_full, data_blur
 
 
-def check_hdf5():
-    # Get hdf5 file
-    hdf5_file = os.path.join('data', 'data.h5')
-
-    with h5py.File(hdf5_file, 'r') as f:
-        data_full = f['train_data_full']
-        data_blur = f['train_data_blur']
-        for i in range(data_full.shape[0]):
-            plt.figure()
-            image_full = data_full[i, :, :, :]
-            image_blur = data_blur[i, :, :, :]
-            image = np.concatenate((image_full, image_blur), axis=1)
-            plt.imshow(image)
-            plt.show()
-            plt.clf()
-            plt.close()
+def generate_image(full, blur, generated, path, epoch=None, index=None):
+    full = full * 127.5 + 127.5
+    blur = blur * 127.5 + 127.5
+    generated = generated * 127.5 + 127.5
+    for i in range(generated.shape[0]):
+        image_full = full[i, :, :, :]
+        image_blur = blur[i, :, :, :]
+        image_generated = generated[i, :, :, :]
+        image = np.concatenate((image_full, image_blur, image_generated), axis=1)
+        if (epoch is not None) and (index is not None):
+            Image.fromarray(image.astype(np.uint8)).save(path + str(epoch + 1) + "_" + str(index + 1) + ".png")
+        else:
+            Image.fromarray(image.astype(np.uint8)).save(path + str(i) + ".png")
 
 
 if __name__ == '__main__':

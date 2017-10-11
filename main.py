@@ -1,5 +1,4 @@
 import numpy as np
-from PIL import Image
 
 import data_utils
 from losses import adversarial_loss, generator_loss
@@ -35,10 +34,11 @@ def train(batch_size, epoch_num):
 
             # output generated images for each 30 iters
             if (index % 30 == 0) and (index != 0):
-                image = generated_images * 127.5 + 127.5
-                Image.fromarray(image.astype(np.uint8)).save("result/" + str(epoch + 1) + "_" + str(index + 1) + ".png")
+                data_utils.generate_image(image_full_batch, image_blur_batch, generated_images,
+                                          'result/interim/', epoch, index)
 
-            # concatenate the full and generated images
+            # concatenate the full and generated images,
+            # the full images at top, the generated images at bottom
             x = np.concatenate((image_full_batch, generated_images))
 
             # generate labels for the full and generated images
@@ -73,10 +73,10 @@ def test(batch_size):
     y_test, x_test = data_utils.load_data(data_type='test')
     # 训练完模型后，可以运行该函数生成图片
     g = generator_model()
-    g.compile(loss='binary_crossentropy', optimizer="SGD")
-    g.load_weights('generator_weights.h5')
-    noise = np.random.uniform(-1, 1, (batch_size, 100))
-    generated_images = g.predict(noise, verbose=0)
+    g.compile(optimizer='adam', loss=generator_loss)
+    g.load_weights('weight/generator_weights.h5')
+    generated_images = g.predict(x=x_test, batch_size=batch_size)
+    data_utils.generate_image(y_test, x_test, generated_images, 'result/finally/')
 
 
 train(batch_size=4, epoch_num=20)
