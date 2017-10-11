@@ -32,9 +32,6 @@ def format_image(image_path, size):
     return np.array(image_full), np.array(image_blur)
 
 
-# format_image('data/small/test/301.jpg',size=256)
-
-
 # convert images to hdf5 data
 def build_hdf5(jpeg_dir, size=256):
     # put data in HDF5
@@ -58,9 +55,6 @@ def build_hdf5(jpeg_dir, size=256):
             f.create_dataset('%s_data_blur' % data_type, data=data_blur)
 
 
-# build_hdf5('data/small')
-
-
 # load data by data type
 def load_data(data_type):
     with h5py.File('data/data.h5', 'r') as f:
@@ -71,10 +65,6 @@ def load_data(data_type):
         data_blur = normalization(data_blur)
 
         return data_full, data_blur
-
-
-# image_full, image_blur=load_data('train')
-# print(image_full,'\n',len(image_blur))
 
 
 def check_hdf5():
@@ -95,4 +85,9 @@ def check_hdf5():
             plt.close()
 
 
-# check_hdf5()
+if __name__ == '__main__':
+    format_image('data/small/test/301.jpg', size=256)
+    build_hdf5('data/small')
+    img_full, img_blur = load_data('train')
+    print(img_full, '\n', len(img_blur))
+    # check_hdf5()

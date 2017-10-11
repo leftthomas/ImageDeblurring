@@ -5,6 +5,7 @@ from keras.layers.core import Dropout, Dense, Flatten, Lambda
 from keras.layers.merge import Average
 from keras.layers.normalization import BatchNormalization
 from keras.models import Model
+from keras.utils.vis_utils import plot_model
 
 # the paper defined hyper-parameter:chr
 channel_rate = 64
@@ -75,10 +76,6 @@ def generator_model():
     return model
 
 
-# g = generator_model()
-# g.summary()
-
-
 def discriminator_model():
     # PatchGAN
     inputs = Input(shape=patch_shape)
@@ -123,11 +120,6 @@ def discriminator_model():
     return model
 
 
-# d = discriminator_model()
-# d.summary()
-# plot_model(d)
-
-
 def generator_containing_discriminator(generator, discriminator):
     inputs = Input(shape=image_shape)
     generated_image = generator(inputs)
@@ -136,5 +128,11 @@ def generator_containing_discriminator(generator, discriminator):
     return model
 
 
-# m = generator_containing_discriminator(generator=generator_model(),discriminator=discriminator_model())
-# m.summary()
+if __name__ == '__main__':
+    g = generator_model()
+    g.summary()
+    d = discriminator_model()
+    d.summary()
+    plot_model(d)
+    m = generator_containing_discriminator(generator_model(), discriminator_model())
+    m.summary()
