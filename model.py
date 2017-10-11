@@ -2,6 +2,7 @@ from keras.layers import Input, concatenate
 from keras.layers.advanced_activations import LeakyReLU, PReLU
 from keras.layers.convolutional import Convolution2D
 from keras.layers.core import Dropout, Dense, Flatten, Lambda
+from keras.layers.merge import Average
 from keras.layers.normalization import BatchNormalization
 from keras.models import Model
 
@@ -70,7 +71,7 @@ def generator_model():
 
     # Output Image
     outputs = Convolution2D(filters=3, kernel_size=(3, 3), padding='same', activation='tanh')(x)
-    model = Model(inputs=inputs, outputs=outputs)
+    model = Model(inputs=inputs, outputs=outputs, name='Generator')
     return model
 
 
@@ -99,15 +100,26 @@ def discriminator_model():
 
     x = Flatten()(x)
     outputs = Dense(units=1, activation='sigmoid')(x)
-    model = Model(inputs=inputs, outputs=outputs)
+    model = Model(inputs=inputs, outputs=outputs, name='PatchGAN')
     # model.summary()
 
     # discriminator
-    inputs = [Input(shape=patch_shape) for _ in range(int(image_shape[0] / patch_shape[0])
-                                                      * int(image_shape[1] / patch_shape[1]))]
-    x = [model(patch) for patch in inputs]
-    outputs = concatenate(x)
-    model = Model(inputs=inputs, outputs=outputs)
+    inputs = Input(shape=image_shape)
+
+    list_row_idx = [(i * channel_rate, (i + 1) * channel_rate) for i in
+                    range(int(image_shape[0] / patch_shape[0]))]
+    list_col_idx = [(i * channel_rate, (i + 1) * channel_rate) for i in
+                    range(int(image_shape[1] / patch_shape[1]))]
+
+    list_patch = []
+    for row_idx in list_row_idx:
+        for col_idx in list_col_idx:
+            x_patch = Lambda(lambda z: z[:, row_idx[0]:row_idx[1], col_idx[0]:col_idx[1], :])(inputs)
+            list_patch.append(x_patch)
+
+    x = [model(patch) for patch in list_patch]
+    outputs = Average()(x)
+    model = Model(inputs=inputs, outputs=outputs, name='Discriminator')
     return model
 
 
@@ -119,19 +131,7 @@ def discriminator_model():
 def generator_containing_discriminator(generator, discriminator):
     inputs = Input(shape=image_shape)
     generated_image = generator(inputs)
-
-    list_row_idx = [(i * channel_rate, (i + 1) * channel_rate) for i in
-                    range(int(image_shape[0] / patch_shape[0]))]
-    list_col_idx = [(i * channel_rate, (i + 1) * channel_rate) for i in
-                    range(int(image_shape[1] / patch_shape[1]))]
-
-    list_gen_patch = []
-    for row_idx in list_row_idx:
-        for col_idx in list_col_idx:
-            x_patch = Lambda(lambda z: z[:, row_idx[0]:row_idx[1], col_idx[0]:col_idx[1], :])(generated_image)
-            list_gen_patch.append(x_patch)
-
-    outputs = discriminator(list_gen_patch)
+    outputs = discriminator(generated_image)
     model = Model(inputs=inputs, outputs=outputs)
     return model
 
