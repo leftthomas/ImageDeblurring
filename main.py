@@ -17,8 +17,10 @@ def train(batch_size, epoch_num):
     # compile the models, use default optimizer parameters
     # generator use adversarial loss
     g.compile(optimizer='adam', loss=generator_loss)
+    g.load_weights('weight/generator_weights.h5')
     # discriminator use binary cross entropy loss
     d.compile(optimizer='adam', loss='binary_crossentropy')
+    d.load_weights('weight/discriminator_weights.h5')
     # adversarial net use adversarial loss
     d_on_g.compile(optimizer='adam', loss=adversarial_loss)
 
@@ -35,7 +37,7 @@ def train(batch_size, epoch_num):
             # output generated images for each 30 iters
             if (index % 30 == 0) and (index != 0):
                 data_utils.generate_image(image_full_batch, image_blur_batch, generated_images,
-                                          'result/interim/', epoch, index)
+                                          'result/interim/', epoch + 10, index)
 
             # concatenate the full and generated images,
             # the full images at top, the generated images at bottom
@@ -78,5 +80,5 @@ def test(batch_size):
     data_utils.generate_image(y_test, x_test, generated_images, 'result/finally/')
 
 
-train(batch_size=2, epoch_num=10)
+train(batch_size=2, epoch_num=30)
 # test(132)
