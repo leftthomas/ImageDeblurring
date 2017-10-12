@@ -86,4 +86,3 @@ if __name__ == '__main__':
     build_hdf5('data/small')
     img_full, img_blur = load_data('train')
     print(img_full, '\n', len(img_blur))
-    # check_hdf5()
