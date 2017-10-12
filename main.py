@@ -23,8 +23,8 @@ def train(batch_size, epoch_num):
     d_on_g.compile(optimizer='adam', loss=adversarial_loss)
 
     for epoch in range(epoch_num):
-        print("Epoch is", epoch + 1)
-        print("Batches is", int(x_train.shape[0] / batch_size))
+        print('epoch: ', epoch + 1, '/', epoch_num)
+        print('batches: ', int(x_train.shape[0] / batch_size))
 
         for index in range(int(x_train.shape[0] / batch_size)):
             # select a batch data
@@ -46,18 +46,18 @@ def train(batch_size, epoch_num):
 
             # train discriminator
             d_loss = d.train_on_batch(x, y)
-            print("batch %d d_loss : %f" % (index + 1, d_loss))
+            print('batch %d d_loss : %f' % (index + 1, d_loss))
 
             # let discriminator can't be trained
             d.trainable = False
 
             # train adversarial net
             d_on_g_loss = d_on_g.train_on_batch(image_blur_batch, [1] * batch_size)
-            print("batch %d d_on_g_loss : %f" % (index + 1, d_on_g_loss))
+            print('batch %d d_on_g_loss : %f' % (index + 1, d_on_g_loss))
 
             # train generator
             g_loss = g.train_on_batch(image_blur_batch, image_full_batch)
-            print("batch %d g_loss : %f" % (index + 1, g_loss))
+            print('batch %d g_loss : %f' % (index + 1, g_loss))
 
             # let discriminator can be trained
             d.trainable = True

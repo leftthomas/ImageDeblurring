@@ -76,9 +76,9 @@ def generate_image(full, blur, generated, path, epoch=None, index=None):
         image_generated = generated[i, :, :, :]
         image = np.concatenate((image_full, image_blur, image_generated), axis=1)
         if (epoch is not None) and (index is not None):
-            Image.fromarray(image.astype(np.uint8)).save(path + str(epoch + 1) + "_" + str(index + 1) + ".png")
+            Image.fromarray(image.astype(np.uint8)).save(path + str(epoch + 1) + '_' + str(index + 1) + '.png')
         else:
-            Image.fromarray(image.astype(np.uint8)).save(path + str(i) + ".png")
+            Image.fromarray(image.astype(np.uint8)).save(path + str(i) + '.png')
 
 
 if __name__ == '__main__':
