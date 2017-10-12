@@ -1,4 +1,3 @@
-import keras.backend as K
 import numpy as np
 
 import data_utils
@@ -51,21 +50,17 @@ def train(batch_size, epoch_num):
 
             # let discriminator can't be trained
             d.trainable = False
-            K.clear_session()
 
             # train adversarial net
             d_on_g_loss = d_on_g.train_on_batch(image_blur_batch, [1] * batch_size)
             print('batch %d d_on_g_loss : %f' % (index + 1, d_on_g_loss))
-            K.clear_session()
 
             # train generator
             g_loss = g.train_on_batch(image_blur_batch, image_full_batch)
             print('batch %d g_loss : %f' % (index + 1, g_loss))
-            K.clear_session()
 
             # let discriminator can be trained
             d.trainable = True
-            K.clear_session()
 
             # output weights for generator and discriminator each 30 iters
             if (index % 30 == 0) and (index != 0):
@@ -83,5 +78,5 @@ def test(batch_size):
     data_utils.generate_image(y_test, x_test, generated_images, 'result/finally/')
 
 
-train(batch_size=4, epoch_num=20)
+train(batch_size=2, epoch_num=10)
 # test(132)
