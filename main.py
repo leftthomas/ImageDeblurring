@@ -78,5 +78,5 @@ def test(batch_size):
     data_utils.generate_image(y_test, x_test, generated_images, 'result/finally/')
 
 
-train(batch_size=3, epoch_num=40)
-# test(132)
+train(batch_size=4, epoch_num=40)
+# test(4)
