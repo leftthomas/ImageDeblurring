@@ -1,4 +1,8 @@
+import glob as gb
+
 import numpy as np
+from PIL import Image
+from keras.layers import Input
 
 import data_utils
 from losses import adversarial_loss, generator_loss
@@ -71,12 +75,32 @@ def train(batch_size, epoch_num):
 def test(batch_size):
     # Note the x(blur) in the second, the y(full) in the first
     y_test, x_test = data_utils.load_data(data_type='test')
-    # 训练完模型后，可以运行该函数生成图片
     g = generator_model()
     g.load_weights('weight/generator_weights.h5')
     generated_images = g.predict(x=x_test, batch_size=batch_size)
     data_utils.generate_image(y_test, x_test, generated_images, 'result/finally/')
 
 
-train(batch_size=4, epoch_num=40)
+def test_pictures(batch_size):
+    data_path = 'data/test/*.jpeg'
+    images_path = gb.glob(data_path)
+    data_blur = []
+    for image_path in images_path:
+        image_blur = Image.open(image_path)
+        data_blur.append(np.array(image_blur))
+
+    data_blur = np.array(data_blur).astype(np.float32)
+    data_blur = data_utils.normalization(data_blur)
+    inputs = Input(shape=(data_blur.shape[1], data_blur.shape[2], data_blur.shape[3]))
+    g = generator_model()
+    g.load_weights('weight/generator_weights.h5')
+    generated_images = g.predict(x=data_blur, batch_size=batch_size)
+    generated = generated_images * 127.5 + 127.5
+    for i in range(generated.shape[0]):
+        image_generated = generated[i, :, :, :]
+        Image.fromarray(image_generated.astype(np.uint8)).save('result/test/' + str(i) + '.png')
+
+
+# train(batch_size=4, epoch_num=40)
 # test(4)
+test_pictures(4)
