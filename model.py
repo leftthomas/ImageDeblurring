@@ -1,5 +1,5 @@
 from keras.layers import Input, concatenate
-from keras.layers.advanced_activations import LeakyReLU, PReLU
+from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.convolutional import Convolution2D
 from keras.layers.core import Dropout, Dense, Flatten, Lambda
 from keras.layers.merge import Average
@@ -8,7 +8,7 @@ from keras.models import Model
 from keras.utils.vis_utils import plot_model
 
 # the paper defined hyper-parameter:chr
-channel_rate = 16
+channel_rate = 64
 # Note the image_shape must be multiple of patch_shape
 image_shape = (256, 256, 3)
 patch_shape = (channel_rate, channel_rate, 3)
@@ -34,8 +34,8 @@ def dense_block(inputs, dilation_factor=None):
 
 
 def generator_model():
-    # Input Image
-    inputs = Input(shape=image_shape)
+    # Input Image, Note the shape is variable
+    inputs = Input(shape=(None, None, 3))
     # The Head
     h = Convolution2D(filters=4 * channel_rate, kernel_size=(3, 3), padding='same')(inputs)
 
@@ -68,7 +68,9 @@ def generator_model():
     # The Global Skip Connection
     x = concatenate([h, x])
     x = Convolution2D(filters=channel_rate, kernel_size=(3, 3), padding='same')(x)
-    x = PReLU()(x)
+    # PReLU can't be used, because it is connected with the input shape
+    # x = PReLU()(x)
+    x = LeakyReLU(alpha=0.2)(x)
 
     # Output Image
     outputs = Convolution2D(filters=3, kernel_size=(3, 3), padding='same', activation='tanh')(x)

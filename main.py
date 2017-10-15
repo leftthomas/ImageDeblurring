@@ -2,7 +2,6 @@ import glob as gb
 
 import numpy as np
 from PIL import Image
-from keras.layers import Input
 
 import data_utils
 from losses import adversarial_loss, generator_loss
@@ -91,7 +90,7 @@ def test_pictures(batch_size):
 
     data_blur = np.array(data_blur).astype(np.float32)
     data_blur = data_utils.normalization(data_blur)
-    inputs = Input(shape=(data_blur.shape[1], data_blur.shape[2], data_blur.shape[3]))
+
     g = generator_model()
     g.load_weights('weight/generator_weights.h5')
     generated_images = g.predict(x=data_blur, batch_size=batch_size)
@@ -101,6 +100,6 @@ def test_pictures(batch_size):
         Image.fromarray(image_generated.astype(np.uint8)).save('result/test/' + str(i) + '.png')
 
 
-# train(batch_size=4, epoch_num=40)
+train(batch_size=4, epoch_num=10)
 # test(4)
-test_pictures(4)
+# test_pictures(4)
