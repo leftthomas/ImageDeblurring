@@ -8,7 +8,7 @@ from keras.models import Model
 from keras.utils.vis_utils import plot_model
 
 # the paper defined hyper-parameter:chr
-channel_rate = 64
+channel_rate = 32
 # Note the image_shape must be multiple of patch_shape
 image_shape = (256, 256, 3)
 patch_shape = (channel_rate, channel_rate, 3)

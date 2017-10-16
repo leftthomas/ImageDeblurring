@@ -100,6 +100,7 @@ def test_pictures(batch_size):
         Image.fromarray(image_generated.astype(np.uint8)).save('result/test/' + str(i) + '.png')
 
 
-train(batch_size=4, epoch_num=10)
-# test(4)
-# test_pictures(4)
+if __name__ == '__main__':
+    # train(batch_size=2, epoch_num=10)
+    # test(4)
+    test_pictures(2)
