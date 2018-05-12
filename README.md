@@ -1,6 +1,6 @@
 # ImageDeblurring
 A Keras implementation of image deblurring based on ICCV 2017 paper 
-[Deep Generative Filter for motion deblurring](https://arxiv.org/abs/1709.03481)
+[Deep Generative Filter for motion deblurring](https://arxiv.org/abs/1709.03481).
 
 ## Requirements
 - [Anaconda](https://www.anaconda.com/download/)
