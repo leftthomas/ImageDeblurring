@@ -14,10 +14,6 @@ pip install --ignore-installed --upgrade https://storage.googleapis.com/tensorfl
 ```
 pip install keras
 ```
-- tqdm
-```
-conda install tqdm
-```
 
 ## Usage
 
